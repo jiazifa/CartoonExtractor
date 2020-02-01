@@ -1,24 +1,8 @@
 #! -*- coding: utf-8 -*-
 
-import os
-import io
-import re
-import sys
 import time
-import json
-import argparse
-import logging
-import cartoon
-from importlib import import_module
-from argparse import ArgumentParser
-from typing import Tuple, Any, Dict, List, Callable, Optional, Union
-from urllib import parse
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-
-SITES = {
-    "fzdm": "fzdm",
-}
+from urllib import request, parse
+import socket
 
 FAKE_HEADER = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",  # noqa
@@ -28,134 +12,45 @@ FAKE_HEADER = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0",  # noqa
 }
 
-# global var
-prefer_list: bool = False
+# global variables
 
 
-def parse_host(host: str) -> Tuple[str, int]:
-    """  解析域名与端口
-    """
-    if re.match(r"^(\d+)$", host) is not None:
-        return ("0.0.0.0", int(host))
-    if re.match(r"^(\w+)://", host) is not None:
-        host = "//" + host
-    o = parse.urlparse(host)
-    hostname = o.hostname or "0.0.0.0"
-    port = o.port or 0
-    return (hostname, port)
+def urlopen_with_retry(*args, **kwargs):
+    retry_time = 3
+    for i in range(retry_time):
+        try:
+            return request.urlopen(*args, **kwargs)
+        except Exception as e:
+            if i + 1 == retry_time:
+                raise e
 
-def match1(text: str, *patterns: Any) -> Union[List[str], None]:
 
-    ret: List[str] = []
-    if len(patterns) == 1:
-        pattern = patterns[0]
-        match = re.search(pattern, text)
-        if match:
-            ret.append(match.group(1))
-        else:
-            return None
+def get_content(url, headers={}) -> bytes:
+    req = request.Request(url, headers=headers)
+    response = urlopen_with_retry(req)
+    data = response.read()
+    return data
+
+
+def post_content(url, headers={}, post_data={}, **kwargs) -> bytes:
+    req = request.Request(url, headers=headers)
+    if kwargs.get("post_data_raw"):
+        post_data_enc = bytes(kwargs["post_data_raw"], "utf-8")
     else:
-        for pattern in patterns:
-            match = re.search(pattern, text)
-            if match:
-                ret.append(match.group(1))
-    return ret
+        post_data_enc = bytes(parse.urlencode(post_data), "utf-8")
+    response = urlopen_with_retry(req, data=post_data_enc)
+    data = response.read()
+    return data
 
-def url_to_module(url: str) -> Tuple[Any, str]:
 
-    hosts = match1(url, (r'https?://([^/]+)/'))
-    if not hosts:
-        return (None, url)
-    host: str = hosts[0]
-    if host.endswith('.com.cn') or host.endswith('.ac.cn'):
-        host = host[:-3]
-    domains = match1(host, r'(\.[^.]+\.[^.]+)$') or []
-    domain = domains[0] or host
-
-    url = ''.join([ch if ord(ch) in range(128) else parse.quote(ch) for ch in url])
-    ks = match1(domain, r'([^.]+)') or []
-    k = ks[0] or ''
-    if k in SITES:
-        return (import_module('.'.join(['cartoon', 'extractors', SITES[k]])), url)
+def url_size(url, headers={}):
+    if headers:
+        response = urlopen_with_retry(request.Request(url, headers=headers))
     else:
-        return (None, url)
+        response = urlopen_with_retry(request.Request(url))
+    size = response.headers.get("content-length")
+    return int(size) if size is not None else float("inf")
 
 
-def any_download(url, **kwargs):
-    print("download")
-    m, url = url_to_module(url)
-    print(m, url)
-    pass
-
-
-def any_download_playlist(url, **kwargs):
-    print("download playlost")
-    pass
-
-
-def download_main(
-    download: Callable[..., None],
-    download_playlist: Callable[..., None],
-    urls: List[str],
-):
-    for url in urls:
-        if re.match(r'https?://', url) is None:
-            url = "http://" + url
-
-        if prefer_list:
-            download_playlist(url)
-        else:
-            download(url)
-
-
-def parse_main(**kwargs):
-
-    logging.basicConfig(format="[%(levelname)s] %(message)s")
-
-    parser = ArgumentParser(
-        prog="ct-get",
-        usage="ct-get [OPTION] ... URL...",
-        description="tool for cartoon downloader",
-    )
-
-    parser.add_argument(
-        "-v", "--version", action="version", version=cartoon.__version__
-    )
-
-    run_grp = parser.add_argument_group("Dry run options", "(no actual download)")
-    run_grp.add_mutually_exclusive_group()
-
-    run_grp.add_argument(
-        "-i",
-        "--info",
-        action="store_true",
-        help="Print extracted information with URLs",
-    )
-
-    download_grp = parser.add_argument_group("Download options")
-    download_grp.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        help="Show traceback and other debug infomation",
-    )
-    download_grp.add_argument(
-        "-l", "--playlist", action="store_true", help="prefer to download list"
-    )
-
-    parser.add_argument("URL", nargs="*", help=argparse.SUPPRESS)
-    args = parser.parse_args()
-
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    global prefer_list
-    if args.playlist:
-        prefer_list = True
-
-    URLs: List[str] = []
-    URLs.extend(args.URL)
-    download_main(any_download, any_download_playlist, URLs)
-
-if __name__ == "__main__":
-    download_main(any_download, any_download_playlist, ["https://manhua.fzdm.com/25/"])
+def urls_size(urls, headers={}):
+    return sum(url_size(url, headers) for url in urls)
