@@ -18,6 +18,9 @@ DESCRIPTION = """
 A Tool for Cartoon Extractor
 """
 REQUIRES_PYTHON = ">2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
+REQUIRED = [
+    "requests", "beautifulsoup4",
+]
 
 here = os.path.dirname(__name__)
 readme = io.open(os.path.join(here, "README.md"), encoding="utf-8").read()
@@ -31,9 +34,9 @@ setup(
     description=DESCRIPTION,
     long_description=readme,
     long_description_content_type='text/markdown',
-    install_requires=[],
+    install_requires=REQUIRED,
     python_requires=REQUIRES_PYTHON,
-    
+
     packages=find_packages("src"),
     package_dir={"": "src"},
 

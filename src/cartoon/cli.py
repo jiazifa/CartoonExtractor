@@ -8,11 +8,13 @@ import time
 import json
 import argparse
 import logging
-import cartoon
 from importlib import import_module
 from argparse import ArgumentParser
 from typing import Tuple, Any, Dict, List, Callable, Optional, Union
 from urllib import parse, request, error
+
+import cartoon
+from cartoon.common import *
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
@@ -22,25 +24,6 @@ SITES = {
 
 # global var
 prefer_list: bool = False
-
-
-def match1(text: str, *patterns: Any) -> Union[List[str], None]:
-
-    ret: List[str] = []
-    if len(patterns) == 1:
-        pattern = patterns[0]
-        match = re.search(pattern, text)
-        if match:
-            ret.append(match.group(1))
-        else:
-            return None
-    else:
-        for pattern in patterns:
-            match = re.search(pattern, text)
-            if match:
-                ret.append(match.group(1))
-    return ret
-
 
 def url_to_module(url: str) -> Tuple[Any, str]:
 
@@ -142,5 +125,5 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    urls = ["https://manhua.fzdm.com/25/"]
+    urls = ["https://manhua.fzdm.com/25/155/"]
     download_main(any_download, any_download_playlist, urls)
