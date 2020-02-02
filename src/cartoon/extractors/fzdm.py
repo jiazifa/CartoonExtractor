@@ -8,13 +8,8 @@ IMAGE_HOST = "http://p3.manhuapan.com/"
 HOST = "https://manhua.fzdm.com/"
 SITE_NAME = "风之动漫"
 
-bs: Optional[BeautifulSoup] = None
-
 
 def get_bs_element(content: str) -> BeautifulSoup:
-    global bs
-    if bs:
-        return bs
     bs = BeautifulSoup(content, "html.parser")
     return bs
 
@@ -23,14 +18,16 @@ def get_next_page_link(current: str, content: str) -> Optional[str]:
 
     bs = get_bs_element(content)
     a_s = bs.find_all("a", "pure-button-primary")
-    
+
     a = list(filter(lambda tag: tag.string == "下一页", a_s))
     if not a:
         return None
-    if a[0].string == "下一页":
+    node = a[0]
+    if node.string == "下一页":
         path_spl = current.split("?")[0].split("/")
         path_spl.pop(-1)
-        path_spl.append(a[0]["href"])
+        appended: str = node["href"]
+        path_spl.append(appended)
         r = "/".join(path_spl)
         return r
     return None
@@ -57,8 +54,10 @@ def get_title(content: str) -> str:
     title = title.replace(SITE_NAME, "").strip()
     return title
 
+
 def get_filename(img_url: str, title: str, filename: str) -> str:
     return filename + "." + img_url.split(".")[-1]
+
 
 def prefer_download_list(url: str):
     pass
@@ -74,19 +73,12 @@ def prefer_download(url: str):
         filename = get_image_name(content)
         if target_url and filename:
             target_filename = get_filename(target_url, title, filename)
-            print(target_filename)
             url_save(
-                target_url,
-                target_filename,
+                target_url, target_filename,
             )
         next_page = get_next_page_link(url, content)
-        print(next_page)
         if not next_page:
             content = None
         else:
             url = next_page
             content = str(get_content(next_page), encoding="utf-8")
-
-if __name__ == "__main__":
-    link = "https://manhua.fzdm.com/25/155/index_1.html"
-    prefer_download(link)
