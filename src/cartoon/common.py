@@ -39,10 +39,12 @@ def match1(text: str, *patterns: Any) -> Union[List[str], None]:
 
 def urlopen_with_retry(*args, **kwargs):
     retry_time = 3
+    relay_step = 5
     for i in range(retry_time):
         try:
             return request.urlopen(*args, **kwargs)
         except Exception as e:
+            time.sleep(i * relay_step)
             if i + 1 == retry_time:
                 raise e
 
