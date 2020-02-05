@@ -6,7 +6,7 @@ import re
 from urllib import request, parse
 import socket
 from typing import List, Dict, Optional, Any, Union
-
+from cartoon.util import log
 
 FAKE_HEADER = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",  # noqa
@@ -108,7 +108,7 @@ def url_save(
             response = urlopen_with_retry(request.Request(url, headers=temp_headers), timeout=timeout)
         else:
             response = urlopen_with_retry(request.Request(url, headers=temp_headers))
-        
+        log.i("saving {}".format(url))
         with open(temp_filename, open_mode) as output:
             while True:
                 buffer = None
