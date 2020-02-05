@@ -47,7 +47,7 @@ def urlopen_with_retry(*args, **kwargs):
                 raise e
 
 
-def get_content(url: str, headers={}) -> bytes:
+def get_content(url: str, headers: Dict[str, str]={}) -> bytes:
     req = request.Request(url, headers=headers)
     response = urlopen_with_retry(req)
     data = response.read()
