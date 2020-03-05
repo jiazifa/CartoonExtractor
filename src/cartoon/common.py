@@ -84,7 +84,7 @@ def urls_size(urls: List[str], headers: Dict[str, str]={}):
 
 def url_save(
     url: Union[List[str], str],
-    filepath: str,
+    filename: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     refer:Optional[str] = None,
     timeout: Optional[float] = None,
@@ -102,15 +102,19 @@ def url_save(
         is_chunked, urls = False, [url]
 
     open_mode = "wb"
-    temp_filename = filepath + ".download" if file_size != float("inf") else filepath
     # received: int = 0
-
+    
     for url in urls:
+        if filename:
+            temp_filename = filename + ".download" if file_size != float("inf") else filename
+        else:
+            filepath: str = url.split("/")[-1]
+            temp_filename = filepath
         if timeout:
             response = urlopen_with_retry(request.Request(url, headers=temp_headers), timeout=timeout)
         else:
             response = urlopen_with_retry(request.Request(url, headers=temp_headers))
-        log.i("saving {}".format(url))
+        log.i("saving {} to {}".format(url, temp_filename))
         with open(temp_filename, open_mode) as output:
             while True:
                 buffer = None
