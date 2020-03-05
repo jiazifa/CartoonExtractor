@@ -33,4 +33,4 @@ def prefer_download(url: str):
     content = str(get_content(url), encoding="utf-8")
     images: List[str] = get_imgs_from_page(content)
     for img in images:
-        url_save(images)
+        url_save(img, img.split("/")[-1])
