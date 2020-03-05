@@ -38,7 +38,7 @@ def match1(text: str, *patterns: Any) -> Union[List[str], None]:
 
 
 def urlopen_with_retry(*args, **kwargs):
-    retry_time = 3
+    retry_time = 8
     relay_step = 5
     for i in range(retry_time):
         try:
