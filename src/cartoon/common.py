@@ -106,6 +106,9 @@ def url_save(
     # received: int = 0
 
     for url in urls:
+        if os.path.exists(filepath):
+            log.i("{filepath} is exists, continue".format(filepath=filepath))
+            continue
         if timeout:
             response = urlopen_with_retry(request.Request(url, headers=temp_headers), timeout=timeout)
         else:

@@ -39,7 +39,3 @@ def download_one(url: str):
 
 prefer_download = download_one
 prefer_download_list = download_all
-
-if __name__ == "__main__":
-    url = "https://m.kuaikanmanhua.com/mobile/comics/35451/"
-    prefer_download(url)
