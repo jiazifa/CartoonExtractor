@@ -90,6 +90,8 @@ def urls_save(
     **kwargs
 ):
     cur_path = os.getcwd()
+    if os.path.exists(dir_name):
+        return
     temp_dirname = "." + dir_name
     if not os.path.exists(temp_dirname):
         os.mkdir(temp_dirname)
