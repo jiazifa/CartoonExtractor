@@ -20,6 +20,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 SITES = {
     "fzdm": "fzdm",
+    "jav468": "jav",
+    "kuaikanmanhua": "kkmh",
 }
 
 # global var
