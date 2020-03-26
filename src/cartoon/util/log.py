@@ -36,7 +36,7 @@ class SimpleProgressBar:
         self.last_updated = time.time()
 
         totol = round(self.totol_size / (1024 * 1024), 1)
-        percent = self._received / totol
+        percent = (self._received + 0.01) / totol
 
         self._bar = "{percent}%% {recv}/{totol}MB"
     
@@ -44,10 +44,9 @@ class SimpleProgressBar:
         self._displayed = True
         perecent = round(self._received * 100 / self.totol_size, 1)
         
-        bar = self._bar.format(perecent=str(perecent), recv=str(self._received), totol=str(self.totol_size))
-        i(bar)
-        # sys.stdout.write("\r" + bar)
-        # sys.stdout.flush()
+        bar = self._bar.format(percent=str(perecent), recv=str(self._received), totol=str(self.totol_size))
+        sys.stdout.write("\r" + bar + "\r")
+        sys.stdout.flush()
         
     def update_received(self, n: int):
         self._received += n
@@ -73,3 +72,33 @@ class SimpleProgressBar:
             print()
             self._displayed = False
 
+
+class CountProgressBar:
+    _displayed: bool = False
+    _received: int = 0
+    _speed: str = '0'
+    _bar: str = ""
+
+    def __init__(self, totol_count: int):
+        self.totol_count = totol_count
+
+        percent = (self._received + 0.01) / totol_count
+
+        self._bar = "{percent}%% {recv}/{totol}"
+    
+    def update(self):
+        self._displayed = True
+        perecent = round(self._received * 100 / self.totol_size, 1)
+        
+        bar = self._bar.format(percent=str(perecent), recv=str(self._received), totol=str(self.totol_size))
+        sys.stdout.write("\r" + bar + "\r")
+        sys.stdout.flush()
+        
+    def update_received(self, n: int):
+        self._received += n
+        self.update()
+
+    def done(self):
+        if self._displayed:
+            print()
+            self._displayed = False
