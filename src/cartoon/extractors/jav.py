@@ -12,6 +12,9 @@ def get_bs_element(content: str) -> BeautifulSoup:
     bs = BeautifulSoup(content, "html.parser")
     return bs
 
+def get_title(content: str) -> str:
+    bs = get_bs_element(content)
+    return bs.title.string
 
 def get_imgs_from_page(content: str) -> List[str]:
     bs = get_bs_element(content)
@@ -23,14 +26,19 @@ def get_imgs_from_page(content: str) -> List[str]:
     return result
 
 
-def prefer_download_list(url: str):
+def download_list(url: str):
     pass
 
 
-def prefer_download(url: str):
+def download_one(url: str):
     print(url)
     content: Optional[str] = None
     content = str(get_content(url), encoding="utf-8")
     images: List[str] = get_imgs_from_page(content)
-    for img in images:
-        url_save(img, img.split("/")[-1])
+    folder = get_title(content)
+    safe_f = "".join([c for c in folder if c.isalpha() or c.isdigit() or c==' ']).rstrip()
+    url_file_tuple: List[Tuple[str, str]] = [(img, img.split("/")[-1]) for img in images]
+    urls_save(url_file_tuple, safe_f)
+
+prefer_download = download_one
+prefer_download_list = download_list

@@ -40,11 +40,12 @@ def get_comics_list(content: str) -> List[str]:
 
 def get_title(content: str) -> str:
     bs = get_bs_element(content)
-    return bs.title.string
+    keepcharacters = (' ','.','_')
+    return "".join(c for c in bs.title.string if c.isalnum() or c in keepcharacters).rstrip()
 
 
 def download_all(url: str):
-    print(url)
+    log.i(url)
     content: Optional[str] = None
     content = str(get_content(url), encoding="utf-8")
     pages = get_comics_list(content)
@@ -56,7 +57,7 @@ def download_all(url: str):
 
 
 def download_one(url: str):
-    print(url)
+    log.i(url)
     content: Optional[str] = None
     content = str(get_content(url), encoding="utf-8")
     images: List[str] = get_imgs_from_page(content)

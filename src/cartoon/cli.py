@@ -18,7 +18,7 @@ from cartoon.common import *
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-SITES = {
+SITES: Dict[str, str] = {
     "fzdm": "fzdm",
     "jav468": "jav",
     "kuaikanmanhua": "kkmh",
@@ -28,6 +28,11 @@ SITES = {
 prefer_list: bool = False
 
 def url_to_module(url: str) -> Tuple[Any, str]:
+    """
+    find module by url, we match with dic SITES 
+
+    Return: module name if matched
+    """
 
     hosts = match1(url, (r"https?://([^/]+)/"))
     if not hosts:
@@ -47,12 +52,20 @@ def url_to_module(url: str) -> Tuple[Any, str]:
         return (import_module(".".join(["cartoon", "extractors", "universal"])), url)
 
 
-def any_download(url, **kwargs):
+def any_download(url: str, **kwargs):
+    """
+    dowload a single html url
+    use module if matched, otherwise we use universal downloader
+    """
     m, url = url_to_module(url)
     m.prefer_download(url)
 
 
-def any_download_playlist(url, **kwargs):
+def any_download_playlist(url: str, **kwargs):
+    """
+    dowload a list html url
+    use module if matched, otherwise we use universal downloader
+    """
     m, url = url_to_module(url)
     m.prefer_download_list(url)
 
@@ -82,10 +95,11 @@ def parse_main(**kwargs):
         description="tool for cartoon downloader",
     )
 
+    # version info
     parser.add_argument(
         "-v", "--version", action="version", version=cartoon.__version__
     )
-
+    # 命令分组， 便于分割
     run_grp = parser.add_argument_group("Dry run options", "(no actual download)")
     run_grp.add_mutually_exclusive_group()
 
@@ -95,18 +109,21 @@ def parse_main(**kwargs):
         action="store_true",
         help="Print extracted information with URLs",
     )
-
+     
+    # 下载选项
     download_grp = parser.add_argument_group("Download options")
+    # debug 会输出一些信息
     download_grp.add_argument(
         "-d",
         "--debug",
         action="store_true",
         help="Show traceback and other debug infomation",
     )
+    # 下载的是列表
     download_grp.add_argument(
         "-l", "--playlist", action="store_true", help="prefer to download list"
     )
-
+    # 将args参数赋予URL
     parser.add_argument("URL", nargs="*", help=argparse.SUPPRESS)
     args = parser.parse_args()
 
@@ -123,9 +140,7 @@ def parse_main(**kwargs):
 
 
 def main(**kwargs):
+    """
+    inner function
+    """
     parse_main(**kwargs)
-
-
-if __name__ == "__main__":
-    urls = ["https://manhua.fzdm.com/25/155/"]
-    download_main(any_download, any_download_playlist, urls)

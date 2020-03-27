@@ -6,9 +6,8 @@ import re
 from urllib import request, parse
 import socket
 from typing import List, Dict, Optional, Any, Union, Tuple
-from cartoon.util import log
 
-FAKE_HEADER = {
+FAKE_HEADER: Dict[str, str] = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",  # noqa
     "Accept-Charset": "UTF-8,*;q=0.5",
     "Accept-Encoding": "gzip,deflate,sdch",
@@ -38,6 +37,10 @@ def match1(text: str, *patterns: Any) -> Union[List[str], None]:
 
 
 def urlopen_with_retry(*args, **kwargs):
+    """
+    fetch url with retry times
+    args & kwargs for request.urlopen
+    """
     retry_time = 8
     relay_step = 5
     for i in range(retry_time):
@@ -50,6 +53,11 @@ def urlopen_with_retry(*args, **kwargs):
 
 
 def get_content(url: str, headers: Dict[str, str] = {}) -> bytes:
+    """
+    get url content
+
+    Return: bytes
+    """
     req = request.Request(url, headers=headers)
     response = urlopen_with_retry(req)
     data = response.read()
@@ -69,7 +77,7 @@ def post_content(
     return data
 
 
-def url_size(url: str, headers: Dict[str, str] = {}):
+def url_size(url: str, headers: Dict[str, str] = {}) -> Union[int, float]:
     if headers:
         response = urlopen_with_retry(request.Request(url, headers=headers))
     else:
@@ -78,8 +86,9 @@ def url_size(url: str, headers: Dict[str, str] = {}):
     return int(size) if size is not None else float("inf")
 
 
-def urls_size(urls: List[str], headers: Dict[str, str] = {}):
+def urls_size(urls: List[str], headers: Dict[str, str] = {}) -> Union[int, float]:
     return sum(url_size(url, headers) for url in urls)
+
 
 def urls_save(
     url_names: List[Tuple[str, str]],
@@ -89,6 +98,16 @@ def urls_save(
     timeout: Optional[float] = None,
     **kwargs
 ):
+    """
+    save urls to dir_name
+
+    Args:
+        url_names:  Tuple contains [img_url, file_name]
+        dir_name: the directory will created
+        headers: request header
+        refer: refer if needed
+        timeout: timeout 
+    """
     cur_path = os.getcwd()
     if os.path.exists(dir_name):
         return
@@ -101,7 +120,6 @@ def urls_save(
     # rename
     os.chdir(cur_path)
     os.rename(temp_dirname, dir_name)
-    
 
 
 def url_save(
@@ -129,7 +147,6 @@ def url_save(
 
     for url in urls:
         if os.path.exists(filepath):
-            log.i("{filepath} is exists, continue".format(filepath=filepath))
             continue
         if timeout:
             response = urlopen_with_retry(
@@ -137,7 +154,6 @@ def url_save(
             )
         else:
             response = urlopen_with_retry(request.Request(url, headers=temp_headers))
-        log.i("saving {}".format(url))
         with open(temp_filename, open_mode) as output:
             while True:
                 buffer = None
