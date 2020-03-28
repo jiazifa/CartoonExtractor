@@ -6,6 +6,7 @@ import re
 from urllib import request, parse
 import socket
 from typing import List, Dict, Optional, Any, Union, Tuple
+from cartoon.util import log
 
 FAKE_HEADER: Dict[str, str] = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",  # noqa
@@ -16,8 +17,6 @@ FAKE_HEADER: Dict[str, str] = {
 }
 
 # global variables
-
-
 def match1(text: str, *patterns: Any) -> Union[List[str], None]:
 
     ret: List[str] = []
@@ -41,7 +40,7 @@ def urlopen_with_retry(*args, **kwargs):
     fetch url with retry times
     args & kwargs for request.urlopen
     """
-    retry_time = 8
+    retry_time = 3
     relay_step = 5
     for i in range(retry_time):
         try:
@@ -135,25 +134,31 @@ def url_save(
         temp_headers.setdefault("refer", refer)
 
     if isinstance(url, list):
-        file_size = urls_size(url, temp_headers)
+        # file_size = urls_size(url, temp_headers)
         is_chunked, urls = True, url
     else:
-        file_size = url_size(url, temp_headers)
+        # file_size = url_size(url, temp_headers)
         is_chunked, urls = False, [url]
 
     open_mode = "wb"
-    temp_filename = filepath + ".download" if file_size != float("inf") else filepath
+    temp_filename = filepath + ".download" # if file_size != float("inf") else filepath
     # received: int = 0
 
     for url in urls:
         if os.path.exists(filepath):
             continue
-        if timeout:
-            response = urlopen_with_retry(
-                request.Request(url, headers=temp_headers), timeout=timeout
-            )
-        else:
-            response = urlopen_with_retry(request.Request(url, headers=temp_headers))
+        log.i("saving " + url)
+        try:
+            if timeout:
+                response = urlopen_with_retry(
+                    request.Request(url, headers=temp_headers), timeout=timeout
+                )
+            else:
+                response = urlopen_with_retry(
+                    request.Request(url, headers=temp_headers)
+                )
+        except Exception as e:
+            continue
         with open(temp_filename, open_mode) as output:
             while True:
                 buffer = None
