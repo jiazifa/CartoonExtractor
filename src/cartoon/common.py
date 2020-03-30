@@ -1,11 +1,34 @@
 #! -*- coding: utf-8 -*-
 
-import os
+import os, random
 import time
 import re
 from urllib import request, parse
 import socket
 from typing import List, Dict, Optional, Any, Union, Tuple
+import requests
+from cartoon.util import log
+
+UA_LIST: List[str] = [
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1",
+    "Mozilla/5.0 (X11; CrOS i686 2268.111.0) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1092.0 Safari/536.6",
+    "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1090.0 Safari/536.6",
+    "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/19.77.34.5 Safari/537.1",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.9 Safari/536.5",
+    "Mozilla/5.0 (Windows NT 6.0) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.36 Safari/536.5",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3",
+    "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3",
+    "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
+    "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+    "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+    "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.0 Safari/536.3",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
+    "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
+]
 
 FAKE_HEADER: Dict[str, str] = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",  # noqa
@@ -15,9 +38,12 @@ FAKE_HEADER: Dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0",  # noqa
 }
 
+def get_header() -> Dict[str, str]:
+    new_ = FAKE_HEADER.copy()
+    new_["User-Agent"] = random.choice(UA_LIST)
+    return new_
+
 # global variables
-
-
 def match1(text: str, *patterns: Any) -> Union[List[str], None]:
 
     ret: List[str] = []
@@ -36,58 +62,38 @@ def match1(text: str, *patterns: Any) -> Union[List[str], None]:
     return ret
 
 
-def urlopen_with_retry(*args, **kwargs):
+def get_with_retry(*args, **kwargs):
     """
     fetch url with retry times
     args & kwargs for request.urlopen
     """
-    retry_time = 8
+    retry_time = 3
     relay_step = 5
     for i in range(retry_time):
         try:
-            return request.urlopen(*args, **kwargs)
+            response = requests.get(*args, **kwargs)
+            return response
         except Exception as e:
             time.sleep(i * relay_step)
             if i + 1 == retry_time:
                 raise e
 
 
-def get_content(url: str, headers: Dict[str, str] = {}) -> bytes:
+def get_content(url: str, headers: Optional[Dict[str, str]] = None) -> bytes:
     """
     get url content
 
     Return: bytes
     """
-    req = request.Request(url, headers=headers)
-    response = urlopen_with_retry(req)
-    data = response.read()
-    return data
+    content = requests.get(url, headers=headers or get_header()).content
+    return content
 
 
 def post_content(
-    url: str, headers: Dict[str, str] = {}, post_data: Dict[str, Any] = {}, **kwargs
+    url: str, headers: Optional[Dict[str, str]] = None, post_data: Dict[str, Any] = {}, **kwargs
 ) -> bytes:
-    req = request.Request(url, headers=headers)
-    if kwargs.get("post_data_raw"):
-        post_data_enc = bytes(kwargs["post_data_raw"], "utf-8")
-    else:
-        post_data_enc = bytes(parse.urlencode(post_data), "utf-8")
-    response = urlopen_with_retry(req, data=post_data_enc)
-    data = response.read()
-    return data
-
-
-def url_size(url: str, headers: Dict[str, str] = {}) -> Union[int, float]:
-    if headers:
-        response = urlopen_with_retry(request.Request(url, headers=headers))
-    else:
-        response = urlopen_with_retry(request.Request(url))
-    size = response.headers.get("content-length")
-    return int(size) if size is not None else float("inf")
-
-
-def urls_size(urls: List[str], headers: Dict[str, str] = {}) -> Union[int, float]:
-    return sum(url_size(url, headers) for url in urls)
+    content = requests.post(url, headers=headers or get_header(), json=post_data).content
+    return content
 
 
 def urls_save(
@@ -115,8 +121,9 @@ def urls_save(
     if not os.path.exists(temp_dirname):
         os.mkdir(temp_dirname)
     os.chdir(temp_dirname)
+    log.i("chdir to " + temp_dirname)
     for u, n in url_names:
-        url_save(u, n, headers=headers, refer=refer, timeout=timeout, **kwargs)
+        url_save(u, n, headers=headers, refer=u, timeout=timeout, **kwargs)
     # rename
     os.chdir(cur_path)
     os.rename(temp_dirname, dir_name)
@@ -130,42 +137,32 @@ def url_save(
     timeout: Optional[float] = None,
     **kwargs
 ):
-    temp_headers = headers.copy() if headers is not None else {}
+    temp_headers: Dict[str, str] = headers or get_header()
     if refer is not None:
         temp_headers.setdefault("refer", refer)
 
     if isinstance(url, list):
-        file_size = urls_size(url, temp_headers)
+        # file_size = urls_size(url, temp_headers)
         is_chunked, urls = True, url
     else:
-        file_size = url_size(url, temp_headers)
+        # file_size = url_size(url, temp_headers)
         is_chunked, urls = False, [url]
 
     open_mode = "wb"
-    temp_filename = filepath + ".download" if file_size != float("inf") else filepath
+    temp_filename = filepath + ".download"  # if file_size != float("inf") else filepath
     # received: int = 0
 
     for url in urls:
         if os.path.exists(filepath):
             continue
-        if timeout:
-            response = urlopen_with_retry(
-                request.Request(url, headers=temp_headers), timeout=timeout
-            )
-        else:
-            response = urlopen_with_retry(request.Request(url, headers=temp_headers))
+        try:
+            response = requests.get(url, headers=headers or get_header(), timeout=timeout)
+        except Exception as e:
+            print(e)
+            continue
+        log.i("saving " + url + " -> " + temp_filename)
         with open(temp_filename, open_mode) as output:
-            while True:
-                buffer = None
-                try:
-                    buffer = response.read(1024 * 256)
-                except Exception as e:
-                    print(e)
-                    break
-                else:
-                    if not buffer:
-                        break
-                    output.write(buffer)
+            output.write(response.content)
 
         if os.access(filepath, os.W_OK):
             os.remove(filepath)

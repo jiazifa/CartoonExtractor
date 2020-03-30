@@ -22,6 +22,8 @@ SITES: Dict[str, str] = {
     "fzdm": "fzdm",
     "jav468": "jav",
     "kuaikanmanhua": "kkmh",
+    "meizi.info": "mz",
+    "mzitu": "mztu"
 }
 
 # global var
@@ -34,18 +36,16 @@ def url_to_module(url: str) -> Tuple[Any, str]:
     Return: module name if matched
     """
 
-    hosts = match1(url, (r"https?://([^/]+)/"))
-    if not hosts:
-        return (None, url)
-    host: str = hosts[0]
-    if host.endswith(".com.cn") or host.endswith(".ac.cn"):
-        host = host[:-3]
-    domains = match1(host, r"(\.[^.]+\.[^.]+)$") or []
-    domain = domains[0] or host
+    r = parse.urlparse(url)
+    domain = r.netloc
+    safe_starts = ["www."]
+    for start in safe_starts:
+        if domain.startswith(start): domain = domain.replace(start, "")
 
-    url = "".join([ch if ord(ch) in range(128) else parse.quote(ch) for ch in url])
-    ks = match1(domain, r"([^.]+)") or []
-    k = ks[0] or ""
+    safe_ends: List[str] = [".com", ".cn", ".org"]
+    for ends in safe_ends:
+        if domain.endswith(ends): domain = domain.replace(ends, "")
+    k = domain
     if k in SITES:
         return (import_module(".".join(["cartoon", "extractors", SITES[k]])), url)
     else:
