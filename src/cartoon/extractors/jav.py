@@ -62,6 +62,8 @@ def download_one(url: str):
     content: Optional[str] = None
     content = str(get_content(url), encoding="utf-8")
     images: List[str] = get_imgs_from_page(content)
+    if len(images) > 300:
+        return
     folder = get_title(content)
     safe_f = "".join(
         [c for c in folder if c.isalpha() or c.isdigit() or c == " "]

@@ -1,4 +1,4 @@
-import re
+import re, os, time
 from bs4 import BeautifulSoup
 from cartoon.common import *
 import requests
@@ -58,10 +58,17 @@ def download_one(url: str):
         requests.get(url, headers=FAKE_HEADER).content, encoding="utf-8"
     )
     all_links: List[str] = []
+    refer = url + "/1"
     folder = get_title(content or "")
+    next_page: Optional[str] = None
+    HEADERS = {
+        "Referer": "https://www.mzitu.com",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3679.0 Safari/537.36",
+    }
     while content:
         links = get_image_url(content)
         all_links.extend(links)
+        time.sleep(3)
         next_page = get_next_page_link(url, content)
         if not next_page:
             content = None
@@ -76,7 +83,7 @@ def download_one(url: str):
     url_file_tuple: List[Tuple[str, str]] = [
         (img, img.split("/")[-1]) for img in all_links
     ]
-    urls_save(url_file_tuple, safe_f)
+    urls_save(url_file_tuple, safe_f, headers=HEADERS)
 
 
 def download_list(url: str):
