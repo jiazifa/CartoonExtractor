@@ -7,7 +7,7 @@ from urllib import request, parse
 import socket
 from typing import List, Dict, Optional, Any, Union, Tuple
 import requests
-from cartoon.util import log
+# from cartoon.util import log
 
 UA_LIST: List[str] = [
     "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1",
@@ -121,7 +121,7 @@ def urls_save(
     if not os.path.exists(temp_dirname):
         os.mkdir(temp_dirname)
     os.chdir(temp_dirname)
-    log.i("chdir to " + temp_dirname)
+    # log.i("chdir to " + temp_dirname)
     for u, n in url_names:
         url_save(u, n, headers=headers, refer=u, timeout=timeout, **kwargs)
     # rename
@@ -160,7 +160,7 @@ def url_save(
         except Exception as e:
             print(e)
             continue
-        log.i("saving " + url + " -> " + temp_filename)
+        # log.i("saving " + url + " -> " + temp_filename)
         with open(temp_filename, open_mode) as output:
             output.write(response.content)
 
