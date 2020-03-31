@@ -18,7 +18,7 @@ from cartoon.common import *
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-SITES: Dict[str, str] = {
+SITES = {
     "fzdm": "fzdm",
     "jav468": "jav",
     "kuaikanmanhua": "kkmh",

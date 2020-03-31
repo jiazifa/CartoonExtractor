@@ -8,9 +8,15 @@
 
 2. 通过 `python setup.py install` 安装
 
+或者
+
+通过 `pip install git+https://github.com/jiazifa/CartoonExtractor.git` 来安装
+
+
 ### 常用命令
 
 * `ct-get [option] [url]`
+
 
 ### 支持站点
 
