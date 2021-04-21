@@ -38,7 +38,7 @@ FAKE_HEADER: Dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0",  # noqa
 }
 
-def get_header() -> Dict[str, str]:
+def get_header(url: str = None) -> Dict[str, str]:
     new_ = FAKE_HEADER.copy()
     new_["User-Agent"] = random.choice(UA_LIST)
     return new_
@@ -85,14 +85,14 @@ def get_content(url: str, headers: Optional[Dict[str, str]] = None) -> bytes:
 
     Return: bytes
     """
-    content = requests.get(url, headers=headers or get_header()).content
+    content = requests.get(url, headers=headers or get_header(url=url)).content
     return content
 
 
 def post_content(
     url: str, headers: Optional[Dict[str, str]] = None, post_data: Dict[str, Any] = {}, **kwargs
 ) -> bytes:
-    content = requests.post(url, headers=headers or get_header(), json=post_data).content
+    content = requests.post(url, headers=headers or get_header(url=url), json=post_data).content
     return content
 
 
