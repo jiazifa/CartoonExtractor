@@ -23,7 +23,8 @@ SITES = {
     "jav468": "jav",
     "kuaikanmanhua": "kkmh",
     "meizi.info": "mz",
-    "mzitu": "mztu"
+    "mzitu": "mztu",
+    "177pic": "177pic"
 }
 
 # global var
@@ -42,7 +43,7 @@ def url_to_module(url: str) -> Tuple[Any, str]:
     for start in safe_starts:
         if domain.startswith(start): domain = domain.replace(start, "")
 
-    safe_ends: List[str] = [".com", ".cn", ".org"]
+    safe_ends: List[str] = [".com", ".cn", ".org", ".info"]
     for ends in safe_ends:
         if domain.endswith(ends): domain = domain.replace(ends, "")
     k = domain
