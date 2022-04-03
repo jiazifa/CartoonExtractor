@@ -24,7 +24,8 @@ SITES = {
     "kuaikanmanhua": "kkmh",
     "meizi.info": "mz",
     "mzitu": "mztu",
-    "177pic": "177pic"
+    "177pic": "177pic",
+    "177picyy": "177pic",
 }
 
 # global var
@@ -48,8 +49,10 @@ def url_to_module(url: str) -> Tuple[Any, str]:
         if domain.endswith(ends): domain = domain.replace(ends, "")
     k = domain
     if k in SITES:
+        print("发现{url}对应的module:: {m}".format(url=url, m=k))
         return (import_module(".".join(["cartoon", "extractors", SITES[k]])), url)
     else:
+        print("未发现{url}对应的module".format(url=url))
         return (import_module(".".join(["cartoon", "extractors", "universal"])), url)
 
 

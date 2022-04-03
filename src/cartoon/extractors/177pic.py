@@ -54,6 +54,9 @@ def get_title(content: str) -> str:
 
 
 def get_all_links_for_list(content: str) -> List[str]:
+    """
+    获得本页所有的链接，通常这个链接的集合表示的是一部漫画
+    """
     bs = get_bs_element(content)
     result: List[str] = []
 
@@ -69,6 +72,9 @@ def get_all_links_for_list(content: str) -> List[str]:
 
 
 def get_imgs_from_page(content: str) -> List[str]:
+    """
+    获得每页中所有的漫画页面链接
+    """
     bs = get_bs_element(content)
     wrapper = bs.find("div", attrs={"class": "single-content"})
     result: List[str] = []
@@ -93,6 +99,7 @@ def get_pages_url_by_first_page_content(content: str):    # 通过下载地址�
     return sorted(result)
 
 def just_download_one_images(url: str) -> str:
+    """ 仅仅下载一个页面中的所有图片 """
     content: Optional[str] = None
     content = str(get_content(url), encoding="utf-8")
     
@@ -125,6 +132,7 @@ def download_list(url: str):
     items = url.split("/")
     page = items.pop(-1)
     newUrl = "/".join((items + [str(int(page) + 1)]))
+    log.i("prepare to parse " + newUrl)
     download_list(newUrl)
 
 
