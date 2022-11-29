@@ -1,23 +1,32 @@
 #! -*- coding: utf-8 -*-
 
 import os
-import shutil
+import typing
+from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 from cartoon.util import log
 from cartoon.common import *
 
 HOST = "www.177pic.info/"
 SITE_NAME = "_"
 
-CONFIG_FILE_NAME: str = ".ct_config_done"
+CONFIG_FILE_NAME: str = ".ct_config_downloaded"
+
+PicItem = typing.NamedTuple(
+    "PicItem",
+    [("url", str), ("page_url", str), ("folder", str), ("path", str)]
+)
 
 if not os.path.exists(CONFIG_FILE_NAME):
-        with open(CONFIG_FILE_NAME, mode='w') as file:
-            file.writelines(["downloaded"])
+    with open(CONFIG_FILE_NAME, mode='w') as file:
+        file.writelines(["\n"])
+
 
 def write_done_urls(url: str):
     with open(CONFIG_FILE_NAME, mode='a+') as file:
-        file.writelines([url])
+        file.writelines(["\n", url])
+
 
 def is_downloaded(url: str) -> bool:
     urls: set = {}
@@ -25,7 +34,8 @@ def is_downloaded(url: str) -> bool:
         urls = set(file.readlines())
     return url in urls
 
-def get_random_num(digit: int=6) -> str:
+
+def get_random_num(digit: int = 6) -> str:
     """ get a random num
     
     get random num 
@@ -36,12 +46,13 @@ def get_random_num(digit: int=6) -> str:
     """
     if digit is None:
         digit = 1
-    digit = min(max(digit, 1), 32)  # 最大支持32位
+    digit = min(max(digit, 1), 32)    # 最大支持32位
     result = ""
     while len(result) < digit:
         append = str(random.randint(1, 9))
         result = result + append
     return result
+
 
 def get_bs_element(content: str) -> BeautifulSoup:
     bs = BeautifulSoup(content, "html.parser")
@@ -53,9 +64,9 @@ def get_title(content: str) -> str:
     return bs.title.string
 
 
-def get_all_links_for_list(content: str) -> List[str]:
+def get_all_links_for_list(content: str) -> typing.List[str]:
     """
-    获得本页所有的链接，通常这个链接的集合表示的是一部漫画
+    获得本页所有的链接(一个链接就是一本漫画)，通常这个链接的集合表示的是一部漫画
     """
     bs = get_bs_element(content)
     result: List[str] = []
@@ -63,15 +74,15 @@ def get_all_links_for_list(content: str) -> List[str]:
     wrapper = bs.findAll("article")
     for div in wrapper:
         for child in div.descendants:
-            if child.name != "a" :
+            if child.name != "a":
                 continue
             if 'rel' not in child.attrs:
                 continue
             result.append(child.attrs["href"])
-    return result
+    return list(set(result))
 
 
-def get_imgs_from_page(content: str) -> List[str]:
+def get_imgs_from_page(content: str) -> typing.List[str]:
     """
     获得每页中所有的漫画页面链接
     """
@@ -80,42 +91,72 @@ def get_imgs_from_page(content: str) -> List[str]:
     result: List[str] = []
     if wrapper:
         for child in wrapper.descendants:
-            if child.name == "img": 
-                result.append(child.attrs["src"])
+            if child.name == "img":
+                if "data-lazy-src" in child.attrs:
+                    src = child.attrs["data-lazy-src"]
+                else:
+                    src = child.attrs["src"]
+                result.append(src)
     return result
 
 
-def get_pages_url_by_first_page_content(content: str):    # 通过下载地址判断一共有多少页
+def get_pages_url_by_first_page_content(
+    content: str
+) -> typing.Iterable[str]:    # 通过下载地址判断一共有多少页
     bs = get_bs_element(content)
     result: List[str] = []
-    page = bs.find(attrs={'class':'page-links'}) # 直接查找attrs判断页面
+    page = bs.find(attrs={'class': 'page-links'})    # 直接查找attrs判断页面
     if page:
         for child in page.descendants:
-            if child.name != "a" :
+            if child.name != "a":
                 continue
             if 'href' not in child.attrs:
                 continue
             result.append(child.attrs["href"])
     return sorted(result)
 
-def just_download_one_images(url: str) -> str:
-    """ 仅仅下载一个页面中的所有图片 """
+
+def _get_images_by_wright(folder: str, url: str) -> typing.List[PicItem]:
+    """通过浏览器打开，获取本页中所有的图片链接，这个是备用方法，消耗资源较大，尽量不要使用
+
+    Args:
+        folder (str): 下载到文件夹
+        url (str): 页面的地址，这就是解析的目标网页
+
+    Returns:
+        typing.List[PicItem]: 解析网页中所有的图片
+    """
+    with sync_playwright() as pw:
+        browser = pw.webkit.launch(
+            headless=False, proxy={"server": "http://127.0.0.1:7890"}
+        )
+        page = browser.new_page()
+        page.goto(url, timeout=20000)
+        browser.close()
+        return []
+
+
+def get_all_images_from_one_page(folder: str,
+                                 url: str) -> typing.List[PicItem]:
     content: Optional[str] = None
     content = str(get_content(url), encoding="utf-8")
-    
+
     images: List[str] = get_imgs_from_page(content)
+    # 数量太多了就明显不是了，直接跳过
     if len(images) > 300:
-        return
-    folder = get_title(content)
-    safe_f = "".join(
-        [c for c in folder if c.isalpha() or c.isdigit() or c == " "]
-    ).rstrip()
-    url_file_tuple: List[Tuple[str, str]] = [
-        (img, img.split("/")[-1]) for img in images
+        return []
+    items = [
+        PicItem(img, \
+            url, \
+            folder, \
+            os.path.join(folder, img.split("/")[-1])
+        )
+        for img in images
     ]
-    urls_save(url_file_tuple, safe_f)
-    write_done_urls(url)
-    return safe_f
+    if not all([item.url.startswith("http") for item in items]):
+        items = _get_images_by_wright(folder, url)
+    return items
+
 
 def download_list(url: str):
     content: Optional[str] = str(get_content(url), encoding="utf-8")
@@ -132,7 +173,6 @@ def download_list(url: str):
     items = url.split("/")
     page = items.pop(-1)
     newUrl = "/".join((items + [str(int(page) + 1)]))
-    log.i("prepare to parse " + newUrl)
     download_list(newUrl)
 
 
@@ -141,38 +181,53 @@ def download_one(url: str):
     content: Optional[str] = None
     content = str(get_content(url), encoding="utf-8")
     title = get_title(content)
-    # if os.path.exists(title):
-    #     return
+    if is_downloaded(url=url):
+        return
     all_pages_ = get_pages_url_by_first_page_content(content)
+
+    folder = title
+    safe_f = "".join(
+        [c for c in folder if c.isalpha() or c.isdigit() or c == " "]
+    ).rstrip()
+    temp_f = f".{safe_f}"
     all_pages_.append(url)
-    all_folders = []
+    all_images: typing.List[PicItem] = []
     for page in all_pages_:
-        if is_downloaded(page):
-            continue
-        f_name = just_download_one_images(page)
-        all_folders.append(f_name)
-    log.i("合并{}".format(title))
-    return
-    # 合并文件夹
-    target_folder = title
-    try: os.mkdir(target_folder)
-    except: ...
-    for folder in all_folders:
-        for name in os.listdir(folder):
-            if os.path.exists(folder):
-                source_path = os.path.join(folder, name)
-                target_path = os.path.join(target_folder, name)
-                try:
-                    shutil.move(source_path, target_path)
-                except:
-                    ...
-        shutil.rmtree(folder)
-    
+        images_in_one_page = get_all_images_from_one_page(temp_f, page)
+        all_images.extend(images_in_one_page)
+
+    if not all_images:
+        return
+    if not all([str(item.url).startswith("http") for item in all_images]):
+        return
+    log.i(f"收集 {title} 链接完成，正在进行下载")
+
+    if not os.path.exists(temp_f):
+        os.mkdir(temp_f)
+
+    pool = ThreadPoolExecutor(max_workers=10)
+    for item in all_images:
+        pool.submit(url_save, item.url, item.path)
+
+    pool.shutdown(True)
+    log.i(f"下载完成,正在转储...")
+    # 如果
+    if os.path.exists(temp_f):
+        os.rename(temp_f, safe_f)
+
+    write_done_urls(url)
+
+
 def safe_one(url: str):
     try:
         download_one(url)
-    except:
-        ...
+    except Exception as e:
+        log.i(f"{e}")
+
 
 prefer_download = safe_one
 prefer_download_list = download_list
+
+if __name__ == "__main__":
+    # prefer_download('http://www.177picyy.com/html/2022/11/5284010.html')
+    prefer_download_list('http://www.177picyy.com/html/category/tt/')

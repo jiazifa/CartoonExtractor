@@ -62,8 +62,10 @@ def download_one(url: str):
     folder = get_title(content or "")
     next_page: Optional[str] = None
     HEADERS = {
-        "Referer": "https://www.mzitu.com",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3679.0 Safari/537.36",
+        "Referer":
+            "https://www.mzitu.com",
+        "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3679.0 Safari/537.36",
     }
     while content:
         links = get_image_url(content)
@@ -75,7 +77,8 @@ def download_one(url: str):
         else:
             url = next_page
             content = str(
-                requests.get(url, headers=FAKE_HEADER).content, encoding="utf-8"
+                requests.get(url, headers=FAKE_HEADER).content,
+                encoding="utf-8"
             )
     safe_f = "".join(
         [c for c in folder if c.isalpha() or c.isdigit() or c == " "]
@@ -88,7 +91,9 @@ def download_one(url: str):
 
 def download_list(url: str):
     url = "https://www.mzitu.com/all/"
-    content: str = str(requests.get(url, headers=FAKE_HEADER).content, encoding="utf-8")
+    content: str = str(
+        requests.get(url, headers=FAKE_HEADER).content, encoding="utf-8"
+    )
     pages = all_albums(content)
     pages = list(set(pages))
     for p in pages:

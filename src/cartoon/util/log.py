@@ -3,26 +3,33 @@
 import os, sys
 import time
 
+
 def sprint(text: str, *colors) -> str:
     return text
+
 
 def println(text: str, *colors):
     sys.stdout.write(sprint(text, *colors) + "\n")
 
+
 def print_err(text: str, *colors):
     sys.stderr.write(sprint(text, *colors) + "\n")
+
 
 def print_log(text: str, *colors):
     sys.stderr.write(sprint(text, *colors) + "\n")
 
+
 def i(message: str):
     print_log(message)
+
 
 def yes_or_no(message: str) -> bool:
     ans = str(input("%s (y/N)" % message)).lower().strip()
     if ans == "y":
         return True
     return False
+
 
 class SimpleProgressBar:
 
@@ -39,24 +46,28 @@ class SimpleProgressBar:
         percent = (self._received + 0.01) / totol
 
         self._bar = "{percent}%% {recv}/{totol}MB"
-    
+
     def update(self):
         self._displayed = True
         perecent = round(self._received * 100 / self.totol_size, 1)
-        
-        bar = self._bar.format(percent=str(perecent), recv=str(self._received), totol=str(self.totol_size))
+
+        bar = self._bar.format(
+            percent=str(perecent),
+            recv=str(self._received),
+            totol=str(self.totol_size)
+        )
         sys.stdout.write("\r" + bar + "\r")
         sys.stdout.flush()
-        
+
     def update_received(self, n: int):
         self._received += n
         time_diff = time.time() - self.last_updated
         bytes_ps = n / time_diff if time_diff else 0
 
-        if bytes_ps > 1024 ** 3:
-            self._speed = "{:>4.0f} GB/s".format(bytes_ps / 1024 ** 3)
-        elif bytes_ps >= 1024 ** 2:
-            self.speed = '{:4.0f} MB/s'.format(bytes_ps / 1024 ** 2)
+        if bytes_ps > 1024**3:
+            self._speed = "{:>4.0f} GB/s".format(bytes_ps / 1024**3)
+        elif bytes_ps >= 1024**2:
+            self.speed = '{:4.0f} MB/s'.format(bytes_ps / 1024**2)
         elif bytes_ps >= 1024:
             self.speed = '{:4.0f} kB/s'.format(bytes_ps / 1024)
         else:
@@ -85,15 +96,19 @@ class CountProgressBar:
         percent = (self._received + 0.01) / totol_count
 
         self._bar = "{percent}%% {recv}/{totol}"
-    
+
     def update(self):
         self._displayed = True
         perecent = round(self._received * 100 / self.totol_size, 1)
-        
-        bar = self._bar.format(percent=str(perecent), recv=str(self._received), totol=str(self.totol_size))
+
+        bar = self._bar.format(
+            percent=str(perecent),
+            recv=str(self._received),
+            totol=str(self.totol_size)
+        )
         sys.stdout.write("\r" + bar + "\r")
         sys.stdout.flush()
-        
+
     def update_received(self, n: int):
         self._received += n
         self.update()

@@ -1,17 +1,14 @@
 #! -*- coding: utf-8 -*-
 
-import os
 import io
 import re
 import sys
-import time
-import json
 import argparse
 import logging
 from importlib import import_module
 from argparse import ArgumentParser
-from typing import Tuple, Any, Dict, List, Callable, Optional, Union
-from urllib import parse, request, error
+from typing import Tuple, Any, List, Callable
+from urllib import parse
 
 import cartoon
 from cartoon.common import *
@@ -31,6 +28,7 @@ SITES = {
 # global var
 prefer_list: bool = False
 
+
 def url_to_module(url: str) -> Tuple[Any, str]:
     """
     find module by url, we match with dic SITES 
@@ -42,18 +40,25 @@ def url_to_module(url: str) -> Tuple[Any, str]:
     domain = r.netloc
     safe_starts = ["www."]
     for start in safe_starts:
-        if domain.startswith(start): domain = domain.replace(start, "")
+        if domain.startswith(start):
+            domain = domain.replace(start, "")
 
     safe_ends: List[str] = [".com", ".cn", ".org", ".info"]
     for ends in safe_ends:
-        if domain.endswith(ends): domain = domain.replace(ends, "")
+        if domain.endswith(ends):
+            domain = domain.replace(ends, "")
     k = domain
     if k in SITES:
         print("发现{url}对应的module:: {m}".format(url=url, m=k))
-        return (import_module(".".join(["cartoon", "extractors", SITES[k]])), url)
+        return (
+            import_module(".".join(["cartoon", "extractors", SITES[k]])), url
+        )
     else:
         print("未发现{url}对应的module".format(url=url))
-        return (import_module(".".join(["cartoon", "extractors", "universal"])), url)
+        return (
+            import_module(".".join(["cartoon", "extractors",
+                                    "universal"])), url
+        )
 
 
 def any_download(url: str, **kwargs):
@@ -104,7 +109,9 @@ def parse_main(**kwargs):
         "-v", "--version", action="version", version=cartoon.__version__
     )
     # 命令分组， 便于分割
-    run_grp = parser.add_argument_group("Dry run options", "(no actual download)")
+    run_grp = parser.add_argument_group(
+        "Dry run options", "(no actual download)"
+    )
     run_grp.add_mutually_exclusive_group()
 
     run_grp.add_argument(
@@ -113,7 +120,7 @@ def parse_main(**kwargs):
         action="store_true",
         help="Print extracted information with URLs",
     )
-     
+
     # 下载选项
     download_grp = parser.add_argument_group("Download options")
     # debug 会输出一些信息
@@ -125,7 +132,10 @@ def parse_main(**kwargs):
     )
     # 下载的是列表
     download_grp.add_argument(
-        "-l", "--playlist", action="store_true", help="prefer to download list"
+        "-l",
+        "--playlist",
+        action="store_true",
+        help="prefer to download list"
     )
     # 将args参数赋予URL
     parser.add_argument("URL", nargs="*", help=argparse.SUPPRESS)

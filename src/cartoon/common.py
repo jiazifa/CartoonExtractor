@@ -31,17 +31,24 @@ UA_LIST: List[str] = [
 ]
 
 FAKE_HEADER: Dict[str, str] = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",  # noqa
-    "Accept-Charset": "UTF-8,*;q=0.5",
-    "Accept-Encoding": "gzip,deflate,sdch",
-    "Accept-Language": "en-US,en;q=0.8",
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0",  # noqa
+    "Accept":
+        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",    # noqa
+    "Accept-Charset":
+        "UTF-8,*;q=0.5",
+    "Accept-Encoding":
+        "gzip,deflate,sdch",
+    "Accept-Language":
+        "en-US,en;q=0.8",
+    "User-Agent":
+        "Mozilla/5.0 (X11; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0",    # noqa
 }
+
 
 def get_header(url: str = None) -> Dict[str, str]:
     new_ = FAKE_HEADER.copy()
     new_["User-Agent"] = random.choice(UA_LIST)
     return new_
+
 
 # global variables
 def match1(text: str, *patterns: Any) -> Union[List[str], None]:
@@ -90,9 +97,14 @@ def get_content(url: str, headers: Optional[Dict[str, str]] = None) -> bytes:
 
 
 def post_content(
-    url: str, headers: Optional[Dict[str, str]] = None, post_data: Dict[str, Any] = {}, **kwargs
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    post_data: Dict[str, Any] = {},
+    **kwargs
 ) -> bytes:
-    content = requests.post(url, headers=headers or get_header(url=url), json=post_data).content
+    content = requests.post(
+        url, headers=headers or get_header(url=url), json=post_data
+    ).content
     return content
 
 
@@ -149,14 +161,16 @@ def url_save(
         is_chunked, urls = False, [url]
 
     open_mode = "wb"
-    temp_filename = filepath + ".download"  # if file_size != float("inf") else filepath
+    temp_filename = filepath + ".download"    # if file_size != float("inf") else filepath
     # received: int = 0
 
     for url in urls:
         if os.path.exists(filepath):
             continue
         try:
-            response = requests.get(url, headers=headers or get_header(), timeout=timeout)
+            response = requests.get(
+                url, headers=headers or get_header(), timeout=timeout
+            )
         except Exception as e:
             print(e)
             continue

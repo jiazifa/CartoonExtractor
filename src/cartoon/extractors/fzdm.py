@@ -74,7 +74,8 @@ def prefer_download(url: str):
         if target_url and filename:
             target_filename = get_filename(target_url, title, filename)
             url_save(
-                target_url, target_filename,
+                target_url,
+                target_filename,
             )
         next_page = get_next_page_link(url, content)
         if not next_page:

@@ -35,7 +35,7 @@ def get_imgs_from_page(content: str) -> List[str]:
     wrapper = bs.find("figure", attrs={"class": "wp-block-image"})
     result: List[str] = []
     for child in wrapper.descendants:
-        if child.name == "noscript": 
+        if child.name == "noscript":
             for chi in child.descendants:
                 result.append(chi.attrs["src"])
     return result

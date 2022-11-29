@@ -18,7 +18,7 @@ def get_bs_element(content: str) -> BeautifulSoup:
 
 def get_imgs_from_page(content: str) -> List[str]:
     c = re.compile(IMAGES_REGEX)
-    dict_str = c.findall(content)[0]  # 图片的字典信息
+    dict_str = c.findall(content)[0]    # 图片的字典信息
     new_c = re.compile(URL_REGEX)
     urls = new_c.findall(dict_str)
     result: List[str] = []
@@ -40,8 +40,10 @@ def get_comics_list(content: str) -> List[str]:
 
 def get_title(content: str) -> str:
     bs = get_bs_element(content)
-    keepcharacters = (' ','.','_')
-    return "".join(c for c in bs.title.string if c.isalnum() or c in keepcharacters).rstrip()
+    keepcharacters = (' ', '.', '_')
+    return "".join(
+        c for c in bs.title.string if c.isalnum() or c in keepcharacters
+    ).rstrip()
 
 
 def download_all(url: str):

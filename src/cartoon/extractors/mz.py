@@ -1,4 +1,3 @@
-
 import re
 from bs4 import BeautifulSoup
 from cartoon.util import log
@@ -7,13 +6,16 @@ from cartoon.common import *
 HOST = "http://meizi.info/"
 SITE_NAME = "_"
 
+
 def get_bs_element(content: str) -> BeautifulSoup:
     bs = BeautifulSoup(content, "html.parser")
     return bs
 
+
 def get_title(content: str) -> str:
     bs = get_bs_element(content)
     return bs.title.string
+
 
 def get_images_from_page(content: str) -> List[str]:
     result: List[str] = []
@@ -25,8 +27,10 @@ def get_images_from_page(content: str) -> List[str]:
                 result.append(child.attrs["src"])
     return result
 
+
 def download_list(url: str):
     pass
+
 
 def download_one(url: str):
     print(url)
